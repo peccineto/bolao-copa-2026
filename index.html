@@ -102,7 +102,7 @@ input[type=number]{width:52px;text-align:center;padding:0 8px;}
 .game-row:last-child{border-bottom:none;}
 .team-side{flex:1;display:flex;align-items:center;gap:6px;min-width:0;}
 .team-side.right{flex-direction:row-reverse;text-align:right;}
-.team-flag{font-size:18px;flex-shrink:0;}
+.team-flag{font-size:18px;flex-shrink:0;display:flex;align-items:center;}
 .team-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .score-center{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 .score-sep{color:var(--muted2);font-size:12px;}
@@ -342,7 +342,10 @@ const GROUPS_DATA={
   L:["Inglaterra","Croácia","Gana","Panamá"]
 };
 
-const FLAGS={"México":"🇲🇽","África do Sul":"🇿🇦","Coreia do Sul":"🇰🇷","Rep. Tcheca":"🇨🇿","Canadá":"🇨🇦","Bósnia":"🇧🇦","Catar":"🇶🇦","Suíça":"🇨🇭","Brasil":"🇧🇷","Marrocos":"🇲🇦","Haiti":"🇭🇹","Escócia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Estados Unidos":"🇺🇸","Paraguai":"🇵🇾","Austrália":"🇦🇺","Turquia":"🇹🇷","Alemanha":"🇩🇪","Curaçao":"🇨🇼","Costa do Marfim":"🇨🇮","Equador":"🇪🇨","Holanda":"🇳🇱","Japão":"🇯🇵","Suécia":"🇸🇪","Tunísia":"🇹🇳","Bélgica":"🇧🇪","Egito":"🇪🇬","Irã":"🇮🇷","Nova Zelândia":"🇳🇿","Espanha":"🇪🇸","Cabo Verde":"🇨🇻","Arábia Saudita":"🇸🇦","Uruguai":"🇺🇾","França":"🇫🇷","Senegal":"🇸🇳","Noruega":"🇳🇴","Iraque":"🇮🇶","Argentina":"🇦🇷","Argélia":"🇩🇿","Áustria":"🇦🇹","Jordânia":"🇯🇴","Portugal":"🇵🇹","Uzbequistão":"🇺🇿","Colômbia":"🇨🇴","RD Congo":"🇨🇩","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"};
+// ISO country codes for flag images
+const FLAG_CODES={"México":"mx","África do Sul":"za","Coreia do Sul":"kr","Rep. Tcheca":"cz","Canadá":"ca","Bósnia":"ba","Catar":"qa","Suíça":"ch","Brasil":"br","Marrocos":"ma","Haiti":"ht","Escócia":"gb-sct","Estados Unidos":"us","Paraguai":"py","Austrália":"au","Turquia":"tr","Alemanha":"de","Curaçao":"cw","Costa do Marfim":"ci","Equador":"ec","Holanda":"nl","Japão":"jp","Suécia":"se","Tunísia":"tn","Bélgica":"be","Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Espanha":"es","Cabo Verde":"cv","Arábia Saudita":"sa","Uruguai":"uy","França":"fr","Senegal":"sn","Noruega":"no","Iraque":"iq","Argentina":"ar","Argélia":"dz","Áustria":"at","Jordânia":"jo","Portugal":"pt","Uzbequistão":"uz","Colômbia":"co","RD Congo":"cd","Inglaterra":"gb-eng","Croácia":"hr","Gana":"gh","Panamá":"pa"};
+function flagImg(name,size=20){const c=FLAG_CODES[name];if(!c)return'<span style="font-size:16px">🏳</span>';return`<img src="https://flagcdn.com/w${size}/${c}.png" srcset="https://flagcdn.com/w${size*2}/${c}.png 2x" width="${size}" height="${Math.round(size*0.75)}" alt="${name}" style="border-radius:2px;object-fit:cover;vertical-align:middle;flex-shrink:0"/>`;}
+const FLAGS={};
 
 const ALL_TEAMS=Object.values(GROUPS_DATA).flat();
 
@@ -545,7 +548,7 @@ function renderPalpites(){
 function gameRowHTML(g,pl){
   const p=pl?pl.palpites[g.id]||{h:'',a:''}:{h:'',a:''};
   const locked=g.result!==null;
-  const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
+  const hf=flagImg(g.home);const af=flagImg(g.away);
   if(locked){
     const pts=pl?getPtsForGame(g,p):null;
     const ptsHtml=pts!==null&&pts>0?`<span class="badge badge-green" style="font-size:10px;">+${pts}</span>`:'';
@@ -664,7 +667,7 @@ function renderBonus(){
         <span class="badge badge-green">+${q.pts}</span>
       </div>`;
     if(locked){
-      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${FLAGS[adminAns]||''} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${FLAGS[cur]||''} ${cur}`:'— sem palpite'}</div>`;
+      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${flagImg(adminAns,16)} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${flagImg(cur,16)} ${cur}`:'— sem palpite'}</div>`;
     } else if(q.type==='choice'){
       html+=`<div class="bonus-opts">`;
       q.opts.forEach(o=>html+=`<button class="bonus-opt${cur===o?' sel':''}" onclick="saveBonus('${q.key}','${o}')">${o}</button>`);
@@ -674,7 +677,7 @@ function renderBonus(){
         <input type="text" id="bs-${q.key}" placeholder="Buscar seleção..." oninput="filterTeams('${q.key}',this.value,false)" autocomplete="off" value="${cur||''}" style="width:100%"/>
         <div id="bd-${q.key}" class="search-drop"></div>
       </div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${flagImg(cur,20)} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -686,7 +689,7 @@ function filterTeams(key,q,isAdmin){
   const drop=document.getElementById(dpfx+key);
   if(!q){drop.classList.remove('open');return;}
   const m=ALL_TEAMS.filter(t=>t.toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${FLAGS[t]||'🏳'} ${t}</div>`).join('');
+  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${flagImg(t,20)} ${t}</div>`).join('');
   drop.classList.toggle('open',m.length>0);
 }
 
@@ -712,7 +715,7 @@ function renderResultados(){
   if(withResult.length){
     html+=`<div class="section-head"><div class="section-title">Resultados</div><span class="badge badge-green">${withResult.length} jogos</span></div><div class="card">`;
     withResult.forEach(g=>{
-      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
+      const hf=flagImg(g.home);const af=flagImg(g.away);
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <div class="score-final">${g.result.h}–${g.result.a}</div>
@@ -724,7 +727,7 @@ function renderResultados(){
   if(upcoming.length){
     html+=`<div class="section-head"><div class="section-title">Próximos</div></div><div class="card">`;
     upcoming.forEach(g=>{
-      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
+      const hf=flagImg(g.home);const af=flagImg(g.away);
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <span style="font-size:12px;color:var(--muted2);padding:2px 10px;">vs</span>
@@ -800,7 +803,7 @@ function renderAdminResultados(){
 let pR={};
 function adminGameRowHTML(g){
   const r=g.result||{h:'',a:''};
-  const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
+  const hf=flagImg(g.home);const af=flagImg(g.away);
   return `<div class="game-row" style="gap:6px;">
     <div class="team-side right" style="min-width:0;"><span class="team-name" style="font-size:12px;">${g.home}</span><span class="team-flag" style="font-size:15px;">${hf}</span></div>
     <div class="score-center" style="gap:4px;">
@@ -842,7 +845,7 @@ function renderAdminBonus(){
       html+=`</div>`;
     } else {
       html+=`<div class="search-wrap"><input type="text" id="abs-${q.key}" placeholder="Buscar..." oninput="filterTeams('${q.key}',this.value,true)" autocomplete="off" value="${cur||''}" style="width:100%;"/><div id="abd-${q.key}" class="search-drop"></div></div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${flagImg(cur,20)} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -869,7 +872,7 @@ function renderAdminParticipantes(){
       const champ=(p.bonus||{}).champion||'–';
       html+=`<div class="rank-row">
         <div class="rank-avatar" style="background:${avatarColor(name)}">${initials(name)}</div>
-        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${FLAGS[champ]||''} ${champ}</div></div>
+        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${flagImg(champ,14)} ${champ}</div></div>
         <button class="btn btn-danger btn-sm" onclick="removePlayer('${name}')">✕</button>
       </div>`;
     });
