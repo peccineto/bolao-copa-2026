@@ -315,12 +315,14 @@ input[type=number]{width:52px;text-align:center;padding:0 8px;}
     <button class="btn btn-ghost btn-sm" data-atab="bonus-res" onclick="switchAdminTab('bonus-res',this)" style="white-space:nowrap;flex-shrink:0;">Bônus</button>
     <button class="btn btn-ghost btn-sm" data-atab="participantes" onclick="switchAdminTab('participantes',this)" style="white-space:nowrap;flex-shrink:0;">Participantes</button>
     <button class="btn btn-ghost btn-sm" data-atab="ranking-a" onclick="switchAdminTab('ranking-a',this)" style="white-space:nowrap;flex-shrink:0;">Ranking</button>
+    <button class="btn btn-ghost btn-sm" data-atab="backup" onclick="switchAdminTab('backup',this)" style="white-space:nowrap;flex-shrink:0;color:var(--amber);border-color:var(--amber);">Backup</button>
   </div>
 
   <div id="a-tab-resultados"></div>
   <div id="a-tab-bonus-res" style="display:none"></div>
   <div id="a-tab-participantes" style="display:none"></div>
   <div id="a-tab-ranking-a" style="display:none"></div>
+  <div id="a-tab-backup" style="display:none"></div>
 </div>
 
 </div><!-- .app -->
@@ -354,22 +356,115 @@ function avatarColor(name){return AVATAR_COLORS[name.charCodeAt(0)%AVATAR_COLORS
 function initials(name){return name.slice(0,2).toUpperCase();}
 
 function genGames(){
+  // date: DD/MM, time: HH:MM BRT
+  const SCHEDULE={
+    // Grupo A
+    "México|África do Sul":{date:"11/06",time:"16:00"},
+    "Coreia do Sul|Rep. Tcheca":{date:"11/06",time:"23:00"},
+    "Rep. Tcheca|África do Sul":{date:"18/06",time:"13:00"},
+    "México|Coreia do Sul":{date:"18/06",time:"22:00"},
+    "Rep. Tcheca|México":{date:"24/06",time:"22:00"},
+    "África do Sul|Coreia do Sul":{date:"24/06",time:"22:00"},
+    // Grupo B
+    "Canadá|Bósnia":{date:"12/06",time:"16:00"},
+    "Catar|Suíça":{date:"13/06",time:"16:00"},
+    "Suíça|Bósnia":{date:"18/06",time:"16:00"},
+    "Canadá|Catar":{date:"18/06",time:"19:00"},
+    "Suíça|Canadá":{date:"24/06",time:"16:00"},
+    "Bósnia|Catar":{date:"24/06",time:"16:00"},
+    // Grupo C
+    "Brasil|Marrocos":{date:"13/06",time:"19:00"},
+    "Haiti|Escócia":{date:"13/06",time:"22:00"},
+    "Escócia|Marrocos":{date:"19/06",time:"19:00"},
+    "Brasil|Haiti":{date:"19/06",time:"22:00"},
+    "Escócia|Brasil":{date:"24/06",time:"19:00"},
+    "Marrocos|Haiti":{date:"24/06",time:"19:00"},
+    // Grupo D
+    "Estados Unidos|Paraguai":{date:"12/06",time:"22:00"},
+    "Austrália|Turquia":{date:"13/06",time:"01:00"},
+    "Turquia|Paraguai":{date:"19/06",time:"01:00"},
+    "Estados Unidos|Austrália":{date:"19/06",time:"16:00"},
+    "Turquia|Estados Unidos":{date:"25/06",time:"23:00"},
+    "Paraguai|Austrália":{date:"25/06",time:"23:00"},
+    // Grupo E
+    "Alemanha|Curaçao":{date:"14/06",time:"14:00"},
+    "Costa do Marfim|Equador":{date:"14/06",time:"20:00"},
+    "Alemanha|Costa do Marfim":{date:"20/06",time:"17:00"},
+    "Equador|Curaçao":{date:"20/06",time:"21:00"},
+    "Equador|Alemanha":{date:"25/06",time:"17:00"},
+    "Curaçao|Costa do Marfim":{date:"25/06",time:"17:00"},
+    // Grupo F
+    "Holanda|Japão":{date:"14/06",time:"17:00"},
+    "Suécia|Tunísia":{date:"14/06",time:"23:00"},
+    "Holanda|Suécia":{date:"20/06",time:"14:00"},
+    "Tunísia|Japão":{date:"21/06",time:"01:00"},
+    "Tunísia|Holanda":{date:"25/06",time:"20:00"},
+    "Japão|Suécia":{date:"25/06",time:"20:00"},
+    // Grupo G
+    "Bélgica|Egito":{date:"15/06",time:"16:00"},
+    "Irã|Nova Zelândia":{date:"15/06",time:"22:00"},
+    "Bélgica|Irã":{date:"21/06",time:"16:00"},
+    "Nova Zelândia|Egito":{date:"21/06",time:"22:00"},
+    "Nova Zelândia|Bélgica":{date:"27/06",time:"00:00"},
+    "Egito|Irã":{date:"27/06",time:"00:00"},
+    // Grupo H
+    "Espanha|Cabo Verde":{date:"15/06",time:"13:00"},
+    "Arábia Saudita|Uruguai":{date:"15/06",time:"19:00"},
+    "Espanha|Arábia Saudita":{date:"21/06",time:"13:00"},
+    "Uruguai|Cabo Verde":{date:"21/06",time:"19:00"},
+    "Uruguai|Espanha":{date:"26/06",time:"21:00"},
+    "Cabo Verde|Arábia Saudita":{date:"26/06",time:"21:00"},
+    // Grupo I
+    "França|Senegal":{date:"16/06",time:"16:00"},
+    "Iraque|Noruega":{date:"16/06",time:"19:00"},
+    "França|Iraque":{date:"22/06",time:"18:00"},
+    "Noruega|Senegal":{date:"22/06",time:"21:00"},
+    "Noruega|França":{date:"26/06",time:"16:00"},
+    "Senegal|Iraque":{date:"26/06",time:"16:00"},
+    // Grupo J
+    "Argentina|Argélia":{date:"16/06",time:"14:00"},
+    "Áustria|Jordânia":{date:"17/06",time:"01:00"},
+    "Argentina|Áustria":{date:"22/06",time:"14:00"},
+    "Jordânia|Argélia":{date:"23/06",time:"00:00"},
+    "Jordânia|Argentina":{date:"27/06",time:"23:00"},
+    "Argélia|Áustria":{date:"27/06",time:"23:00"},
+    // Grupo K
+    "Portugal|RD Congo":{date:"17/06",time:"14:00"},
+    "Uzbequistão|Colômbia":{date:"17/06",time:"23:00"},
+    "Portugal|Uzbequistão":{date:"23/06",time:"14:00"},
+    "Colômbia|RD Congo":{date:"23/06",time:"23:00"},
+    "Colômbia|Portugal":{date:"27/06",time:"20:30"},
+    "RD Congo|Uzbequistão":{date:"27/06",time:"20:30"},
+    // Grupo L
+    "Inglaterra|Croácia":{date:"17/06",time:"17:00"},
+    "Gana|Panamá":{date:"17/06",time:"20:00"},
+    "Inglaterra|Gana":{date:"23/06",time:"17:00"},
+    "Panamá|Croácia":{date:"23/06",time:"20:00"},
+    "Panamá|Inglaterra":{date:"27/06",time:"18:00"},
+    "Croácia|Gana":{date:"27/06",time:"18:00"},
+  };
+  function getSched(h,a){return SCHEDULE[h+'|'+a]||SCHEDULE[a+'|'+h]||{date:'',time:''};}
   const g=[];let id=1;
   Object.entries(GROUPS_DATA).forEach(([grp,ts])=>{
-    for(let i=0;i<ts.length;i++)for(let j=i+1;j<ts.length;j++)
-      g.push({id:id++,grp,home:ts[i],away:ts[j],phase:"Grupos",result:null});
+    for(let i=0;i<ts.length;i++)for(let j=i+1;j<ts.length;j++){
+      const s=getSched(ts[i],ts[j]);
+      g.push({id:id++,grp,home:ts[i],away:ts[j],phase:"Grupos",result:null,date:s.date,time:s.time});
+    }
   });
   const ko=[
     ["1A","2B"],["1B","2A"],["1C","2D"],["1D","2C"],
     ["1E","2F"],["1F","2E"],["1G","2H"],["1H","2G"],
     ["1I","2J"],["1J","2I"],["1K","2L"],["1L","2K"]
-  ].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Oitavas",result:null}));
+  ].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Oitavas",result:null,date:'',time:''}));
   const q=[
     ["W-O1","W-O2"],["W-O3","W-O4"],["W-O5","W-O6"],["W-O7","W-O8"],
     ["W-O9","W-O10"],["W-O11","W-O12"]
-  ].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Quartas",result:null}));
-  const sf=[["W-Q1","W-Q2"],["W-Q3","W-Q4"]].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Semifinal",result:null}));
-  const fin=[{id:id++,grp:null,home:"P-SF1",away:"P-SF2",phase:"3° lugar",result:null},{id:id++,grp:null,home:"W-SF1",away:"W-SF2",phase:"Final",result:null}];
+  ].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Quartas",result:null,date:'',time:''}));
+  const sf=[["W-Q1","W-Q2"],["W-Q3","W-Q4"]].map(([h,a])=>({id:id++,grp:null,home:h,away:a,phase:"Semifinal",result:null,date:'',time:''}));
+  const fin=[
+    {id:id++,grp:null,home:"P-SF1",away:"P-SF2",phase:"3° lugar",result:null,date:'18/07',time:'16:00'},
+    {id:id++,grp:null,home:"W-SF1",away:"W-SF2",phase:"Final",result:null,date:'19/07',time:'16:00'}
+  ];
   return [...g,...ko,...q,...sf,...fin];
 }
 
@@ -382,8 +477,169 @@ let S={
 };
 
 const KEY='bolao26_premium';
-function loadS(){try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;}}catch(e){}}
-function saveS(){try{localStorage.setItem(KEY,JSON.stringify({cfg:S.cfg,games:S.games,players:S.players}));}catch(e){}}
+
+// ─── SUPABASE CONFIG ─────────────────────────────────────
+// Preencha com suas credenciais do Supabase (ver instruções abaixo)
+const SB_URL = localStorage.getItem('sb_url')||'';
+const SB_KEY = localStorage.getItem('sb_key')||'';
+let sbReady = false;
+let supabase = null;
+
+async function initSupabase(){
+  if(!SB_URL||!SB_KEY){sbReady=false;return;}
+  try{
+    const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+    supabase=mod.createClient(SB_URL,SB_KEY);
+    sbReady=true;
+    console.log('Supabase conectado');
+  }catch(e){sbReady=false;console.warn('Supabase offline:',e);}
+}
+
+async function sbSave(){
+  if(!sbReady||!supabase)return;
+  try{
+    const payload={
+      id:'bolao2026_main',
+      cfg:S.cfg, games:S.games, players:S.players,
+      updated_at:new Date().toISOString()
+    };
+    await supabase.from('bolao_state').upsert(payload,{onConflict:'id'});
+  }catch(e){console.warn('Supabase save error:',e);}
+}
+
+async function sbLoad(){
+  if(!sbReady||!supabase)return false;
+  try{
+    const{data,error}=await supabase.from('bolao_state').select('*').eq('id','bolao2026_main').single();
+    if(error||!data)return false;
+    if(data.cfg)S.cfg=data.cfg;
+    if(data.games)S.games=data.games;
+    if(data.players)S.players=data.players;
+    console.log('Loaded from Supabase');
+    return true;
+  }catch(e){console.warn('Supabase load error:',e);return false;}
+}
+// ─── STORAGE: 3-LAYER PROTECTION ────────────────────────
+const KEY_BACKUP=KEY+'_backup';
+const KEY_META=KEY+'_meta';
+
+function buildPayload(){
+  return {cfg:S.cfg,games:S.games,players:S.players,
+    _saved:new Date().toISOString(),_version:2,
+    _nPlayers:Object.keys(S.players).length,
+    _nResults:S.games.filter(g=>g.result).length};
+}
+
+function loadS(){
+  try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;return;}}catch(e){}
+  try{const d=localStorage.getItem(KEY_BACKUP);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;console.warn('Loaded from backup slot');}}catch(e){}
+}
+
+function saveS(){
+  const payload=buildPayload();const str=JSON.stringify(payload);
+  try{localStorage.setItem(KEY,str);}catch(e){}
+  try{localStorage.setItem(KEY_BACKUP,str);}catch(e){}
+  try{localStorage.setItem(KEY_META,JSON.stringify({saved:payload._saved,players:payload._nPlayers,results:payload._nResults}));}catch(e){}
+  // Also save to Supabase (async, non-blocking)
+  sbSave().catch(()=>{});
+}
+
+function getStorageHealth(){
+  const mainOk=!!localStorage.getItem(KEY);const backupOk=!!localStorage.getItem(KEY_BACKUP);
+  let lastSaved='Nunca';let nPlayers=0;let nResults=0;
+  try{const m=JSON.parse(localStorage.getItem(KEY_META)||'{}');
+    if(m.saved){const diff=Math.round((Date.now()-new Date(m.saved).getTime())/60000);
+      lastSaved=diff<1?'agora mesmo':diff<60?diff+'min atrás':Math.round(diff/60)+'h atrás';}
+    nPlayers=m.players||0;nResults=m.results||0;
+  }catch(e){}
+  return{mainOk,backupOk,lastSaved,nPlayers,nResults};
+}
+
+function downloadBackup(){
+  const str=JSON.stringify(buildPayload(),null,2);
+  const blob=new Blob([str],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='bolao-copa2026-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+  toast('Backup baixado!');
+}
+
+function triggerRestore(){document.getElementById('restore-input').click();}
+
+function handleRestore(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const p=JSON.parse(ev.target.result);
+      if(!p.cfg||!p.games||!p.players){toast('Arquivo invalido','err');return;}
+      const n=Object.keys(p.players).length;
+      if(!confirm('Restaurar backup com '+n+' participante(s) e '+p.games.filter(g=>g.result).length+' resultado(s)?\n\nSalvo em: '+(p._saved||'desconhecido')+'\n\nATENCAO: isso vai sobrescrever os dados atuais.')){return;}
+      S.cfg=p.cfg;S.games=p.games;S.players=p.players;
+      saveS();renderAdmin();renderAdminBackup();
+      toast('Restaurado! '+n+' participante(s) recuperado(s)');
+    }catch(err){toast('Erro ao ler arquivo','err');}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+
+function renderAdminBackup(){
+  const h=getStorageHealth();
+  const nP=Object.keys(S.players).length;
+  const nR=S.games.filter(g=>g.result).length;
+  const nPalpites=Object.values(S.players).reduce((acc,p)=>acc+Object.keys(p.palpites||{}).filter(k=>{const pp=p.palpites[k];return pp.h!==''&&pp.a!==''}).length,0);
+  document.getElementById('a-tab-backup').innerHTML=`
+  <input type="file" id="restore-input" accept=".json" style="display:none" onchange="handleRestore(event)"/>
+  <div style="background:var(--green-bg);border:1px solid var(--green-dim);border-radius:14px;padding:16px;margin-bottom:12px;">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:10px;">Status dos dados</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nP}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">PARTICIPANTES</div></div>
+      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nPalpites}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">PALPITES FEITOS</div></div>
+      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nR}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">RESULTADOS</div></div>
+      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--green);">${h.lastSaved}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">ULTIMO SAVE</div></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;"><span>${h.mainOk?'✅':'❌'}</span><span style="font-size:12px;color:var(--muted);">Copia principal</span></div>
+      <div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;"><span>${h.backupOk?'✅':'❌'}</span><span style="font-size:12px;color:var(--muted);">Copia de seguranca</span></div>
+    </div>
+  </div>
+  <div class="card" style="margin-bottom:10px;">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Baixar backup completo</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Salva um arquivo .json com todos os dados. <strong style="color:var(--amber);">Faca isso diariamente durante a Copa!</strong></div>
+    <button class="btn btn-primary" onclick="downloadBackup()" style="width:100%;">Baixar backup agora</button>
+  </div>
+  <div class="card" style="margin-bottom:10px;">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Restaurar de backup</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Use um arquivo .json baixado anteriormente para recuperar dados perdidos.</div>
+    <button class="btn" onclick="triggerRestore()" style="width:100%;border-color:var(--amber);color:var(--amber);">Restaurar backup</button>
+  </div>
+  <div class="card">
+    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Como os dados sao protegidos</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;">
+      <div style="margin-bottom:4px;">✅ <strong style="color:var(--text);">Copia dupla automatica</strong> — cada salvamento grava em 2 slots diferentes do browser.</div>
+      <div style="margin-bottom:4px;">✅ <strong style="color:var(--text);">Recuperacao automatica</strong> — se a copia principal falhar, carrega da copia de seguranca.</div>
+      <div style="margin-bottom:4px;">⚠️ <strong style="color:var(--amber);">Backup offline recomendado</strong> — baixe o JSON diariamente como garantia extra.</div>
+      <div>❌ <strong style="color:var(--text);">Risco: limpar cache do browser</strong> — so o arquivo JSON salvo offline recupera os dados nesse caso.</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:10px;border-color:var(--amber);">
+    <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--amber);">☁️ Supabase — banco na nuvem</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Com Supabase, os dados ficam salvos na nuvem. Qualquer device acessa os mesmos dados. ${sbReady?'<span style="color:var(--green);">● Conectado</span>':'<span style="color:var(--red);">● Não configurado</span>'}</div>
+    <div class="field" style="margin-bottom:8px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Supabase URL</label>
+      <input type="text" id="sb-url-input" placeholder="https://xxxxx.supabase.co" value="${localStorage.getItem('sb_url')||''}" style="width:100%;font-size:12px;"/>
+    </div>
+    <div class="field" style="margin-bottom:12px;">
+      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Anon Key</label>
+      <input type="text" id="sb-key-input" placeholder="eyJ..." value="${localStorage.getItem('sb_key')||''}" style="width:100%;font-size:12px;"/>
+    </div>
+    <button class="btn" onclick="saveSupabaseConfig()" style="width:100%;border-color:var(--amber);color:var(--amber);margin-bottom:8px;">Salvar e conectar</button>
+    <div style="font-size:11px;color:var(--muted);line-height:1.6;">
+      Como configurar: 1) Acesse supabase.com e crie conta gratuita → 2) Crie um projeto → 3) Va em SQL Editor e execute: <code style="background:var(--surface2);padding:1px 4px;border-radius:4px;font-size:10px;">CREATE TABLE bolao_state (id text PRIMARY KEY, cfg jsonb, games jsonb, players jsonb, updated_at timestamptz);</code> → 4) Copie a URL e Anon Key de Settings > API
+    </div>
+  </div>\`;
+}
 
 // ─── UTILS ──────────────────────────────────────────────
 function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
@@ -455,6 +711,7 @@ function switchAdminTab(tab,btn){
   if(tab==='bonus-res')renderAdminBonus();
   if(tab==='participantes')renderAdminParticipantes();
   if(tab==='ranking-a')renderAdminRanking();
+  if(tab==='backup')renderAdminBackup();
 }
 
 // ─── SCORING ─────────────────────────────────────────────
@@ -549,12 +806,14 @@ function gameRowHTML(g,pl){
   const p=pl?pl.palpites[g.id]||{h:'',a:''}:{h:'',a:''};
   const locked=g.result!==null;
   const hf=flagImg(g.home);const af=flagImg(g.away);
+  const dateTag=g.date?`<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:2px;">${g.date} ${g.time}</div>`:'';
   if(locked){
     const pts=pl?getPtsForGame(g,p):null;
     const ptsHtml=pts!==null&&pts>0?`<span class="badge badge-green" style="font-size:10px;">+${pts}</span>`:'';
     return `<div class="game-row">
       <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
       <div style="text-align:center;flex-shrink:0;">
+        ${dateTag}
         <div class="score-final">${g.result.h}–${g.result.a}</div>
         <div class="my-guess">${p.h!==''?`seu: ${p.h}-${p.a} ${ptsHtml}`:'sem palpite'}</div>
       </div>
@@ -563,10 +822,13 @@ function gameRowHTML(g,pl){
   }
   return `<div class="game-row">
     <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
-    <div class="score-center">
-      <input type="number" min="0" max="20" value="${p.h}" placeholder="–" onchange="savePalpite(${g.id},'h',this.value)" />
-      <span class="score-sep">–</span>
-      <input type="number" min="0" max="20" value="${p.a}" placeholder="–" onchange="savePalpite(${g.id},'a',this.value)" />
+    <div style="text-align:center;flex-shrink:0;">
+      ${dateTag}
+      <div class="score-center">
+        <input type="number" min="0" max="20" value="${p.h}" placeholder="–" onchange="savePalpite(${g.id},'h',this.value)" />
+        <span class="score-sep">–</span>
+        <input type="number" min="0" max="20" value="${p.a}" placeholder="–" onchange="savePalpite(${g.id},'a',this.value)" />
+      </div>
     </div>
     <div class="team-side"><span class="team-flag">${af}</span><span class="team-name">${g.away}</span></div>
   </div>`;
@@ -923,13 +1185,17 @@ let pR={};
 function adminGameRowHTML(g){
   const r=g.result||{h:'',a:''};
   const hf=flagImg(g.home);const af=flagImg(g.away);
+  const dt=g.date?`<div style="font-size:10px;color:var(--muted);">${g.date} ${g.time}</div>`:'';
   return `<div class="game-row" style="gap:6px;">
     <div class="team-side right" style="min-width:0;"><span class="team-name" style="font-size:12px;">${g.home}</span><span class="team-flag" style="font-size:15px;">${hf}</span></div>
-    <div class="score-center" style="gap:4px;">
-      <input type="number" min="0" max="20" value="${r.h}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].h=this.value" style="width:46px;font-size:14px;"/>
-      <span class="score-sep">–</span>
-      <input type="number" min="0" max="20" value="${r.a}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].a=this.value" style="width:46px;font-size:14px;"/>
-      <button class="btn btn-sm ${g.result?'btn-primary':''}" onclick="confirmResult(${g.id})" style="padding:6px 10px;font-size:11px;">${g.result?'✓':'OK'}</button>
+    <div style="text-align:center;flex-shrink:0;">
+      ${dt}
+      <div class="score-center" style="gap:4px;">
+        <input type="number" min="0" max="20" value="${r.h}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].h=this.value" style="width:46px;font-size:14px;"/>
+        <span class="score-sep">–</span>
+        <input type="number" min="0" max="20" value="${r.a}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].a=this.value" style="width:46px;font-size:14px;"/>
+        <button class="btn btn-sm ${g.result?'btn-primary':''}" onclick="confirmResult(${g.id})" style="padding:6px 10px;font-size:11px;">${g.result?'✓':'OK'}</button>
+      </div>
     </div>
     <div class="team-side" style="min-width:0;"><span class="team-flag" style="font-size:15px;">${af}</span><span class="team-name" style="font-size:12px;">${g.away}</span></div>
   </div>`;
