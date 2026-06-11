@@ -598,42 +598,104 @@ function savePalpite(gid,side,val){
 function renderRanking(){
   const gamesR=S.games.filter(g=>g.result).length;
   const players=Object.entries(S.players).map(([name,data])=>{
-    const{pts,exact}=calcPts(data);return{name,pts,exact};
-  }).sort((a,b)=>b.pts-a.pts);
-  let html=`<div class="alert alert-info" style="margin-bottom:16px;">⚽ ${gamesR} de ${S.games.length} jogos com resultado</div>`;
-  if(!players.length){html+='<div style="text-align:center;padding:40px 0;color:var(--muted);">Nenhum participante ainda</div>';}
-  else{
-    const me=S.currentUser;
-    html+=`<div class="card">`;
+    const r=calcPts(data);return{name,...r};
+  }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.w18-a.w18);
+
+  const me=S.currentUser;
+  const myPos=players.findIndex(p=>p.name===me);
+  const myData=players[myPos];
+  const total=players.length*S.cfg.valor;
+
+  let html='';
+
+  // My position card
+  if(myData){
+    html+=`<div style="background:var(--green-bg);border:1px solid var(--green-dim);border-radius:14px;padding:16px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div class="rank-avatar" style="background:#1a4a1a;border-color:var(--green);width:40px;height:40px;">${initials(me)}</div>
+          <div>
+            <div style="font-size:15px;font-weight:600;color:var(--green);">${me}</div>
+            <div style="font-size:11px;color:var(--muted);">${myPos===0?'Líder':myPos+1+'º lugar de '+players.length}</div>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:36px;font-weight:800;color:var(--green);line-height:1;">${myData.pts}</div>
+          <div style="font-size:11px;color:var(--muted);">pontos</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:700;color:var(--gold);">${myData.exact}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">EXATOS</div>
+        </div>
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:700;color:var(--blue);">${myData.w18}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">VENC+GOLS</div>
+        </div>
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:700;color:#a090ff;">${myData.draw}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">EMPATES</div>
+        </div>
+        <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:8px;text-align:center;">
+          <div style="font-size:16px;font-weight:700;color:var(--amber);">${myData.w6}</div>
+          <div style="font-size:9px;color:var(--muted);margin-top:2px;">VENCEDOR</div>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  // Status bar
+  html+=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div class="section-title">Ranking geral</div>
+    <span class="badge badge-muted">${gamesR}/${S.games.length} jogos</span>
+  </div>`;
+
+  if(!players.length){
+    html+='<div style="text-align:center;padding:40px 0;color:var(--muted);">Nenhum participante ainda</div>';
+  } else {
+    html+=`<div class="card" style="margin-bottom:10px;">`;
     players.forEach((p,i)=>{
       const isMe=p.name===me;
       const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-      const rowClass=i===0?'gold-row':i===1?'silver-row':i===2?'bronze-row':'';
-      html+=`<div class="rank-row ${rowClass}${isMe?' me':''}">
-        <div class="rank-pos">${medal||i+1}</div>
-        <div class="rank-avatar" style="background:${avatarColor(p.name)}">${initials(p.name)}</div>
+      const ptColor=i===0?'var(--gold)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--green)';
+      html+=`<div class="rank-row${isMe?' me':''}">
+        <div class="rank-pos" style="${i<3?'font-size:20px;':''}">${medal||i+1}</div>
+        <div class="rank-avatar" style="background:${avatarColor(p.name)};${isMe?'border-color:var(--green);':''}">${initials(p.name)}</div>
         <div class="rank-info">
           <div class="rank-name-text">${p.name}${isMe?' <span style="font-size:10px;color:var(--green);">você</span>':''}</div>
-          <div class="rank-sub">${p.exact} placar exato</div>
+          <div class="rank-sub">
+            <span style="color:var(--gold);">${p.exact}⚡</span>
+            <span style="margin-left:4px;">${p.w18+p.w15g}✓</span>
+            <span style="margin-left:4px;">${p.draw}=</span>
+          </div>
         </div>
         <div style="text-align:right;">
-          <div class="rank-pts-num">${p.pts}</div>
-          <div class="rank-pts-label">pts</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:800;color:${ptColor};">${p.pts}</div>
+          <div style="font-size:10px;color:var(--muted);">pts</div>
         </div>
       </div>`;
     });
     html+=`</div>`;
-    // prize split
-    const total=players.length*S.cfg.valor;
+
+    // Prize
+    if(total>0){
+      html+=`<div class="prize-bar">
+        <div><div class="prize-label">Prêmio total</div><div class="prize-amount">R$ ${total.toLocaleString('pt-BR')}</div></div>
+        <div class="prize-right">
+          <div style="font-size:13px;">🥇 R$ ${Math.round(total*.7).toLocaleString('pt-BR')}</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.6);">🥈 R$ ${Math.round(total*.3).toLocaleString('pt-BR')}</div>
+        </div>
+      </div>`;
+    }
+
+    // Legend
     html+=`<div class="card" style="margin-top:8px;">
-      <div class="label-xs" style="margin-bottom:10px;">Distribuição do prêmio</div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
-        <span style="font-size:13px;">🥇 1º lugar</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:var(--gold);">R$ ${Math.round(total*0.7).toLocaleString('pt-BR')}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;">
-        <span style="font-size:13px;">🥈 2º lugar</span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-size:18px;font-weight:700;color:#c0c0c0;">R$ ${Math.round(total*0.3).toLocaleString('pt-BR')}</span>
+      <div class="label-xs" style="margin-bottom:8px;">Legenda</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);">
+        <span><span style="color:var(--gold);">⚡</span> Placar exato (25pts)</span>
+        <span><span>✓</span> Vencedor+gols (18-15pts)</span>
+        <span><span>=</span> Empate (15pts)</span>
       </div>
     </div>`;
   }
@@ -774,14 +836,71 @@ function renderAdmin(){
   const n=Object.keys(S.players).length;
   const total=n*S.cfg.valor;
   document.getElementById('admin-caixa-badge').textContent=`R$ ${total.toLocaleString('pt-BR')}`;
-  // style first tab btn
   const firstBtn=document.querySelector('[data-atab="resultados"]');
   if(firstBtn){firstBtn.style.background='var(--green-bg)';firstBtn.style.color='var(--green)';firstBtn.style.borderColor='var(--green-dim)';}
 }
 
+// Name mapping: openfootball names → our app names
+const NAME_MAP={
+  'Mexico':'México','South Africa':'África do Sul','South Korea':'Coreia do Sul',
+  'Czech Republic':'Rep. Tcheca','Canada':'Canadá','Bosnia & Herzegovina':'Bósnia',
+  'Qatar':'Catar','Switzerland':'Suíça','Brazil':'Brasil','Morocco':'Marrocos',
+  'Haiti':'Haiti','Scotland':'Escócia','USA':'Estados Unidos','United States':'Estados Unidos',
+  'Paraguay':'Paraguai','Australia':'Austrália','Turkey':'Turquia','Germany':'Alemanha',
+  'Curaçao':'Curaçao','Côte d\'Ivoire':'Costa do Marfim','Ivory Coast':'Costa do Marfim',
+  'Ecuador':'Equador','Netherlands':'Holanda','Japan':'Japão','Sweden':'Suécia',
+  'Tunisia':'Tunísia','Belgium':'Bélgica','Egypt':'Egito','Iran':'Irã',
+  'New Zealand':'Nova Zelândia','Spain':'Espanha','Cape Verde':'Cabo Verde',
+  'Saudi Arabia':'Arábia Saudita','Uruguay':'Uruguai','France':'França',
+  'Senegal':'Senegal','Norway':'Noruega','Iraq':'Iraque','Argentina':'Argentina',
+  'Algeria':'Argélia','Austria':'Áustria','Jordan':'Jordânia','Portugal':'Portugal',
+  'Uzbekistan':'Uzbequistão','Colombia':'Colômbia','DR Congo':'RD Congo',
+  'England':'Inglaterra','Croatia':'Croácia','Ghana':'Gana','Panama':'Panamá'
+};
+function mapName(n){return NAME_MAP[n]||n;}
+
+async function fetchResultsAuto(){
+  const btn=document.getElementById('fetch-btn');
+  if(btn){btn.textContent='Buscando...';btn.disabled=true;}
+  try{
+    const r=await fetch('https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json');
+    const d=await r.json();
+    let updated=0;
+    d.matches.forEach(m=>{
+      if(!m.score1&&m.score1!==0) return;
+      const h=mapName(m.team1);
+      const a=mapName(m.team2);
+      const game=S.games.find(g=>
+        g.phase==='Grupos'&&
+        g.home===h&&g.away===a
+      );
+      if(game&&(game.result===null||game.result===undefined)){
+        game.result={h:parseInt(m.score1),a:parseInt(m.score2)};
+        updated++;
+      }
+    });
+    saveS();
+    renderAdminResultados();
+    if(updated>0){toast(`✓ ${updated} resultado${updated>1?'s':''} atualizado${updated>1?'s':''}!`);}
+    else{toast('Nenhum resultado novo ainda','err');}
+  }catch(e){
+    toast('Erro ao buscar resultados','err');
+  }finally{
+    if(btn){btn.textContent='⟳ Buscar resultados';btn.disabled=false;}
+  }
+}
+
 function renderAdminResultados(){
+  const withResult=S.games.filter(g=>g.result).length;
+  let html=`<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap;">
+    <button id="fetch-btn" class="btn btn-primary" style="flex:1;min-width:180px;" onclick="fetchResultsAuto()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      Buscar resultados automático
+    </button>
+    <span class="badge badge-green">${withResult} jogos confirmados</span>
+  </div>
+  <div class="alert alert-info" style="margin-bottom:16px;font-size:12px;">Atualiza automaticamente via API pública. Você também pode lançar manualmente abaixo.</div>`;
   const phases=['Grupos','Oitavas','Quartas','Semifinal','3° lugar','Final'];
-  let html='';
   phases.forEach(phase=>{
     const games=S.games.filter(g=>g.phase===phase);if(!games.length)return;
     if(phase==='Grupos'){
