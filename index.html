@@ -345,7 +345,12 @@ const GROUPS_DATA={
 };
 
 // ISO country codes for flag images
-const FLAGS={"México":"🇲🇽","África do Sul":"🇿🇦","Coreia do Sul":"🇰🇷","Rep. Tcheca":"🇨🇿","Canadá":"🇨🇦","Bósnia":"🇧🇦","Catar":"🇶🇦","Suíça":"🇨🇭","Brasil":"🇧🇷","Marrocos":"🇲🇦","Haiti":"🇭🇹","Escócia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Estados Unidos":"🇺🇸","Paraguai":"🇵🇾","Austrália":"🇦🇺","Turquia":"🇹🇷","Alemanha":"🇩🇪","Curaçao":"🇨🇼","Costa do Marfim":"🇨🇮","Equador":"🇪🇨","Holanda":"🇳🇱","Japão":"🇯🇵","Suécia":"🇸🇪","Tunísia":"🇹🇳","Bélgica":"🇧🇪","Egito":"🇪🇬","Irã":"🇮🇷","Nova Zelândia":"🇳🇿","Espanha":"🇪🇸","Cabo Verde":"🇨🇻","Arábia Saudita":"🇸🇦","Uruguai":"🇺🇾","França":"🇫🇷","Senegal":"🇸🇳","Noruega":"🇳🇴","Iraque":"🇮🇶","Argentina":"🇦🇷","Argélia":"🇩🇿","Áustria":"🇦🇹","Jordânia":"🇯🇴","Portugal":"🇵🇹","Uzbequistão":"🇺🇿","Colômbia":"🇨🇴","RD Congo":"🇨🇩","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"};
+const FLAG_ISO={"México":"mx","África do Sul":"za","Coreia do Sul":"kr","Rep. Tcheca":"cz","Canadá":"ca","Bósnia":"ba","Catar":"qa","Suíça":"ch","Brasil":"br","Marrocos":"ma","Haiti":"ht","Escócia":"gb-sct","Estados Unidos":"us","Paraguai":"py","Austrália":"au","Turquia":"tr","Alemanha":"de","Curaçao":"cw","Costa do Marfim":"ci","Equador":"ec","Holanda":"nl","Japão":"jp","Suécia":"se","Tunísia":"tn","Bélgica":"be","Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Espanha":"es","Cabo Verde":"cv","Arábia Saudita":"sa","Uruguai":"uy","França":"fr","Senegal":"sn","Noruega":"no","Iraque":"iq","Argentina":"ar","Argélia":"dz","Áustria":"at","Jordânia":"jo","Portugal":"pt","Uzbequistão":"uz","Colômbia":"co","RD Congo":"cd","Inglaterra":"gb-eng","Croácia":"hr","Gana":"gh","Panamá":"pa"};
+function FLAGS(name){
+  const c=FLAG_ISO[name];
+  if(!c)return '<span style="display:inline-block;width:20px;height:14px;background:#333;border-radius:2px;font-size:9px;text-align:center;line-height:14px;color:#aaa;">?</span>';
+  return '<img src="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/flags/4x3/'+c+'.svg" width="22" height="16" alt="'+name+'" style="border-radius:2px;object-fit:cover;vertical-align:middle;flex-shrink:0;display:inline-block"/>';
+}
 ;
 
 const ALL_TEAMS=Object.values(GROUPS_DATA).flat();
@@ -673,7 +678,7 @@ function renderPalpites(){
 function gameRowHTML(g,pl){
   const p=pl?pl.palpites[g.id]||{h:'',a:''}:{h:'',a:''};
   const locked=g.result!==null;
-  const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
+  const hf=FLAGS(g.home)||'🏳';const af=FLAGS(g.away)||'🏳';
   const dt=g.date?'<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:2px;">'+g.date+' '+g.time+'</div>':'';
   if(locked){
     const pts=pl?getPtsForGame(g,p):null;
@@ -842,7 +847,7 @@ function renderBonus(){
         <span class="badge badge-green">+${q.pts}</span>
       </div>`;
     if(locked){
-      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${FLAGS[adminAns]||''} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${FLAGS[cur]||''} ${cur}`:'— sem palpite'}</div>`;
+      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${FLAGS(adminAns)||''} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${FLAGS(cur)||''} ${cur}`:'— sem palpite'}</div>`;
     } else if(q.type==='choice'){
       html+=`<div class="bonus-opts">`;
       q.opts.forEach(o=>html+=`<button class="bonus-opt${cur===o?' sel':''}" onclick="saveBonus('${q.key}','${o}')">${o}</button>`);
@@ -852,7 +857,7 @@ function renderBonus(){
         <input type="text" id="bs-${q.key}" placeholder="Buscar seleção..." oninput="filterTeams('${q.key}',this.value,false)" autocomplete="off" value="${cur||''}" style="width:100%"/>
         <div id="bd-${q.key}" class="search-drop"></div>
       </div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${FLAGS(cur)||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -864,7 +869,7 @@ function filterTeams(key,q,isAdmin){
   const drop=document.getElementById(dpfx+key);
   if(!q){drop.classList.remove('open');return;}
   const m=ALL_TEAMS.filter(t=>t.toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${FLAGS[t]||'🏳'} ${t}</div>`).join('');
+  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${FLAGS(t)||'🏳'} ${t}</div>`).join('');
   drop.classList.toggle('open',m.length>0);
 }
 
@@ -890,7 +895,7 @@ function renderResultados(){
   if(withResult.length){
     html+=`<div class="section-head"><div class="section-title">Resultados</div><span class="badge badge-green">${withResult.length} jogos</span></div><div class="card">`;
     withResult.forEach(g=>{
-      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
+      const hf=FLAGS(g.home)||'';const af=FLAGS(g.away)||'';
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <div class="score-final">${g.result.h}–${g.result.a}</div>
@@ -902,7 +907,7 @@ function renderResultados(){
   if(upcoming.length){
     html+=`<div class="section-head"><div class="section-title">Próximos</div></div><div class="card">`;
     upcoming.forEach(g=>{
-      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
+      const hf=FLAGS(g.home)||'';const af=FLAGS(g.away)||'';
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <span style="font-size:12px;color:var(--muted2);padding:2px 10px;">vs</span>
@@ -1035,7 +1040,7 @@ function renderAdminResultados(){
 let pR={};
 function adminGameRowHTML(g){
   const r=g.result||{h:'',a:''};
-  const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
+  const hf=FLAGS(g.home)||'🏳';const af=FLAGS(g.away)||'🏳';
   const dt=g.date?'<div style="font-size:10px;color:var(--muted);text-align:center;">'+g.date+' '+g.time+'</div>':'';
   const saved=g.result?'<span style="font-size:10px;color:var(--green);">✓</span>':'';
   return '<div class="game-row" style="gap:6px;">'+
@@ -1081,7 +1086,7 @@ function renderAdminBonus(){
       html+=`</div>`;
     } else {
       html+=`<div class="search-wrap"><input type="text" id="abs-${q.key}" placeholder="Buscar..." oninput="filterTeams('${q.key}',this.value,true)" autocomplete="off" value="${cur||''}" style="width:100%;"/><div id="abd-${q.key}" class="search-drop"></div></div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${FLAGS(cur)||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -1108,7 +1113,7 @@ function renderAdminParticipantes(){
       const champ=(p.bonus||{}).champion||'–';
       html+=`<div class="rank-row">
         <div class="rank-avatar" style="background:${avatarColor(name)}">${initials(name)}</div>
-        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${FLAGS[champ]||''} ${champ}</div></div>
+        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${FLAGS(champ)||''} ${champ}</div></div>
         <button class="btn btn-danger btn-sm" onclick="removePlayer('${name}')">✕</button>
       </div>`;
     });
