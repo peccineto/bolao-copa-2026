@@ -327,7 +327,11 @@ input[type=number]{width:52px;text-align:center;padding:0 8px;}
 
 </div><!-- .app -->
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+// ─── CORE UI (loaded first so onclick works) ─────────
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function doLogout(){if(typeof S!=='undefined'){S.currentUser=null;S.isAdmin=false;}showScreen('s-login');}
 // ─── DATA ───────────────────────────────────────────────
 const GROUPS_DATA={
   A:["México","África do Sul","Coreia do Sul","Rep. Tcheca"],
@@ -487,11 +491,18 @@ let supabase = null;
 
 async function initSupabase(){
   if(!SB_URL||!SB_KEY){sbReady=false;return;}
+  // Wait for Supabase CDN to load
+  let attempts=0;
+  while(typeof window.supabase === 'undefined' && attempts<20){
+    await new Promise(r=>setTimeout(r,200));
+    attempts++;
+  }
   try{
-    const mod=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
-    supabase=mod.createClient(SB_URL,SB_KEY);
-    sbReady=true;
-    console.log('Supabase conectado');
+    if(typeof window.supabase !== 'undefined'){
+      supabase=window.supabase.createClient(SB_URL,SB_KEY);
+      sbReady=true;
+      console.log('Supabase conectado');
+    }
   }catch(e){sbReady=false;console.warn('Supabase offline:',e);}
 }
 
@@ -642,7 +653,7 @@ function renderAdminBackup(){
 }
 
 // ─── UTILS ──────────────────────────────────────────────
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
+// showScreen defined above
 
 function toast(msg,type='ok'){
   const t=document.getElementById('toast');
@@ -667,7 +678,7 @@ function doLogin(){
   saveS();renderMain();showScreen('s-main');
 }
 
-function doLogout(){S.currentUser=null;S.isAdmin=false;showScreen('s-login');}
+// doLogout defined above
 
 function createBolao(){
   const ap=document.getElementById('a-newpass').value.trim();
