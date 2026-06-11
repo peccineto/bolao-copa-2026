@@ -345,9 +345,7 @@ const GROUPS_DATA={
 };
 
 // ISO country codes for flag images
-const FLAG_CODES={"México":"mx","África do Sul":"za","Coreia do Sul":"kr","Rep. Tcheca":"cz","Canadá":"ca","Bósnia":"ba","Catar":"qa","Suíça":"ch","Brasil":"br","Marrocos":"ma","Haiti":"ht","Escócia":"gb-sct","Estados Unidos":"us","Paraguai":"py","Austrália":"au","Turquia":"tr","Alemanha":"de","Curaçao":"cw","Costa do Marfim":"ci","Equador":"ec","Holanda":"nl","Japão":"jp","Suécia":"se","Tunísia":"tn","Bélgica":"be","Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Espanha":"es","Cabo Verde":"cv","Arábia Saudita":"sa","Uruguai":"uy","França":"fr","Senegal":"sn","Noruega":"no","Iraque":"iq","Argentina":"ar","Argélia":"dz","Áustria":"at","Jordânia":"jo","Portugal":"pt","Uzbequistão":"uz","Colômbia":"co","RD Congo":"cd","Inglaterra":"gb-eng","Croácia":"hr","Gana":"gh","Panamá":"pa"};
-function flagImg(name,size=20){const c=FLAG_CODES[name];if(!c)return'<span style="font-size:16px">🏳</span>';return`<img src="https://flagcdn.com/w${size}/${c}.png" srcset="https://flagcdn.com/w${size*2}/${c}.png 2x" width="${size}" height="${Math.round(size*0.75)}" alt="${name}" style="border-radius:2px;object-fit:cover;vertical-align:middle;flex-shrink:0"/>`;}
-const FLAGS={};
+const FLAGS={"México":"🇲🇽","África do Sul":"🇿🇦","Coreia do Sul":"🇰🇷","Rep. Tcheca":"🇨🇿","Canadá":"🇨🇦","Bósnia":"🇧🇦","Catar":"🇶🇦","Suíça":"🇨🇭","Brasil":"🇧🇷","Marrocos":"🇲🇦","Haiti":"🇭🇹","Escócia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿","Estados Unidos":"🇺🇸","Paraguai":"🇵🇾","Austrália":"🇦🇺","Turquia":"🇹🇷","Alemanha":"🇩🇪","Curaçao":"🇨🇼","Costa do Marfim":"🇨🇮","Equador":"🇪🇨","Holanda":"🇳🇱","Japão":"🇯🇵","Suécia":"🇸🇪","Tunísia":"🇹🇳","Bélgica":"🇧🇪","Egito":"🇪🇬","Irã":"🇮🇷","Nova Zelândia":"🇳🇿","Espanha":"🇪🇸","Cabo Verde":"🇨🇻","Arábia Saudita":"🇸🇦","Uruguai":"🇺🇾","França":"🇫🇷","Senegal":"🇸🇳","Noruega":"🇳🇴","Iraque":"🇮🇶","Argentina":"🇦🇷","Argélia":"🇩🇿","Áustria":"🇦🇹","Jordânia":"🇯🇴","Portugal":"🇵🇹","Uzbequistão":"🇺🇿","Colômbia":"🇨🇴","RD Congo":"🇨🇩","Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Croácia":"🇭🇷","Gana":"🇬🇭","Panamá":"🇵🇦"};
 ;
 
 const ALL_TEAMS=Object.values(GROUPS_DATA).flat();
@@ -676,28 +674,16 @@ function gameRowHTML(g,pl){
   const p=pl?pl.palpites[g.id]||{h:'',a:''}:{h:'',a:''};
   const locked=g.result!==null;
   const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
+  const dt=g.date?'<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:2px;">'+g.date+' '+g.time+'</div>':'';
   if(locked){
     const pts=pl?getPtsForGame(g,p):null;
-    const ptsHtml=pts!==null&&pts>0?`<span class="badge badge-green" style="font-size:10px;">+${pts}</span>`:'';
-    return `<div class="game-row">
-      <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
-      <div style="text-align:center;flex-shrink:0;">
-        <div class="score-final">${g.result.h}–${g.result.a}</div>
-        <div class="my-guess">${p.h!==''?`seu: ${p.h}-${p.a} ${ptsHtml}`:'sem palpite'}</div>
-      </div>
-      <div class="team-side"><span class="team-flag">${af}</span><span class="team-name">${g.away}</span></div>
-    </div>`;
+    const ptsH=pts&&pts>0?'<span style="font-size:10px;color:var(--green);font-weight:600;">+'+pts+'pts</span>':'';
+    return '<div class="game-row"><div class="team-side right"><span class="team-name">'+g.home+'</span><span class="team-flag">'+hf+'</span></div><div style="text-align:center;flex-shrink:0;">'+dt+'<div class="score-final">'+g.result.h+'\u20139'+g.result.a+'</div><div class="my-guess">'+(p.h!==''?'seu: '+p.h+'-'+p.a+' '+ptsH:'sem palpite')+'</div></div><div class="team-side"><span class="team-flag">'+af+'</span><span class="team-name">'+g.away+'</span></div></div>';
   }
-  return `<div class="game-row">
-    <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
-    <div class="score-center">
-      <input type="number" min="0" max="20" value="${p.h}" placeholder="–" onchange="savePalpite(${g.id},'h',this.value)" />
-      <span class="score-sep">–</span>
-      <input type="number" min="0" max="20" value="${p.a}" placeholder="–" onchange="savePalpite(${g.id},'a',this.value)" />
-    </div>
-    <div class="team-side"><span class="team-flag">${af}</span><span class="team-name">${g.away}</span></div>
-  </div>`;
+  const id=g.id;
+  return '<div class="game-row"><div class="team-side right"><span class="team-name">'+g.home+'</span><span class="team-flag">'+hf+'</span></div><div style="text-align:center;flex-shrink:0;">'+dt+'<div class="score-center"><input type="number" min="0" max="20" value="'+p.h+'" data-id="'+id+'" data-side="h" oninput="spH(this)" /><span class="score-sep">–</span><input type="number" min="0" max="20" value="'+p.a+'" data-id="'+id+'" data-side="a" oninput="spH(this)" /></div></div><div class="team-side"><span class="team-flag">'+af+'</span><span class="team-name">'+g.away+'</span></div></div>';
 }
+function spH(el){savePalpite(parseInt(el.dataset.id),el.dataset.side,el.value);}
 
 function getPtsForGame(g,p){
   if(!g.result||p.h===''||p.a==='')return 0;
@@ -833,7 +819,7 @@ function renderRanking(){
 function renderBonus(){
   const pl=S.players[S.currentUser];
   const questions=[
-    {key:'champGoals',label:'Quantos gols o campeão fará?',pts:20,icon:'⚽',type:'choice',opts:['< 10','10–30','30–50','50–70','70–90','> 110']},
+    {key:'champGoals',label:'Quantos gols o campeão fará?',pts:20,icon:'⚽',type:'choice',opts:['< 10','10–30','30–50','50–70','70–0','> 110']},
     {key:'third',label:'Terceiro colocado',pts:10,icon:'🥉',type:'team'},
     {key:'runnerUp',label:'Vice-campeão',pts:20,icon:'🥈',type:'team'},
     {key:'champion',label:'Campeão',pts:40,icon:'🏆',type:'team'},
@@ -1049,21 +1035,21 @@ function renderAdminResultados(){
 let pR={};
 function adminGameRowHTML(g){
   const r=g.result||{h:'',a:''};
-  const hf=flagImg(g.home);const af=flagImg(g.away);
-  const dt=g.date?`<div style="font-size:10px;color:var(--muted);">${g.date} ${g.time}</div>`:'';
-  return `<div class="game-row" style="gap:6px;">
-    <div class="team-side right" style="min-width:0;"><span class="team-name" style="font-size:12px;">${g.home}</span><span class="team-flag" style="font-size:15px;">${hf}</span></div>
-    <div style="text-align:center;flex-shrink:0;">
-      ${dt}
-      <div class="score-center" style="gap:4px;">
-        <input type="number" min="0" max="20" value="${r.h}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].h=this.value" style="width:46px;font-size:14px;"/>
-        <span class="score-sep">–</span>
-        <input type="number" min="0" max="20" value="${r.a}" onchange="pR[${g.id}]=pR[${g.id}]||{h:'',a:''};pR[${g.id}].a=this.value" style="width:46px;font-size:14px;"/>
-        <button class="btn btn-sm ${g.result?'btn-primary':''}" onclick="confirmResult(${g.id})" style="padding:6px 10px;font-size:11px;">${g.result?'✓':'OK'}</button>
-      </div>
-    </div>
-    <div class="team-side" style="min-width:0;"><span class="team-flag" style="font-size:15px;">${af}</span><span class="team-name" style="font-size:12px;">${g.away}</span></div>
-  </div>`;
+  const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
+  const dt=g.date?'<div style="font-size:10px;color:var(--muted);text-align:center;">'+g.date+' '+g.time+'</div>':'';
+  const saved=g.result?'<span style="font-size:10px;color:var(--green);">✓</span>':'';
+  return '<div class="game-row" style="gap:6px;">'+
+    '<div class="team-side right" style="min-width:0;"><span class="team-name" style="font-size:12px;">'+g.home+'</span><span class="team-flag">'+hf+'</span></div>'+
+    '<div style="text-align:center;flex-shrink:0;">'+dt+
+      '<div class="score-center" style="gap:4px;">'+
+        '<input type="number" min="0" max="20" value="'+r.h+'" onchange="pR['+g.id+']=pR['+g.id+']||{h:' + "'" + '' + "'" + ',a:' + "'" + '' + "'" + '};pR['+g.id+'].h=this.value" style="width:46px;font-size:14px;"/>'+
+        '<span class="score-sep">–</span>'+
+        '<input type="number" min="0" max="20" value="'+r.a+'" onchange="pR['+g.id+']=pR['+g.id+']||{h:' + "'" + '' + "'" + ',a:' + "'" + '' + "'" + '};pR['+g.id+'].a=this.value" style="width:46px;font-size:14px;"/>'+
+        '<button class="btn btn-sm'+(g.result?' btn-primary':'')+'" onclick="confirmResult('+g.id+')" style="padding:6px 10px;font-size:11px;">'+(g.result?'✓':'OK')+'</button>'+
+      '</div>'+
+    '</div>'+
+    '<div class="team-side" style="min-width:0;"><span class="team-flag">'+af+'</span><span class="team-name" style="font-size:12px;">'+g.away+'</span></div>'+
+  '</div>';
 }
 
 function confirmResult(id){
@@ -1076,7 +1062,7 @@ function confirmResult(id){
 
 function renderAdminBonus(){
   const questions=[
-    {key:'champGoals',label:'Gols do campeão',pts:20,icon:'⚽',type:'choice',opts:['< 10','10–30','30–50','50–70','70–90','> 110']},
+    {key:'champGoals',label:'Gols do campeão',pts:20,icon:'⚽',type:'choice',opts:['< 10','10–30','30–50','50–70','70–0','> 110']},
     {key:'third',label:'Terceiro colocado',pts:10,icon:'🥉',type:'team'},
     {key:'runnerUp',label:'Vice-campeão',pts:20,icon:'🥈',type:'team'},
     {key:'champion',label:'Campeão',pts:40,icon:'🏆',type:'team'},
