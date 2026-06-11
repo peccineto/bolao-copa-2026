@@ -102,7 +102,7 @@ input[type=number]{width:52px;text-align:center;padding:0 8px;}
 .game-row:last-child{border-bottom:none;}
 .team-side{flex:1;display:flex;align-items:center;gap:6px;min-width:0;}
 .team-side.right{flex-direction:row-reverse;text-align:right;}
-.team-flag{font-size:18px;flex-shrink:0;display:flex;align-items:center;}
+.team-flag{font-size:18px;flex-shrink:0;}
 .team-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .score-center{display:flex;align-items:center;gap:5px;flex-shrink:0;}
 .score-sep{color:var(--muted2);font-size:12px;}
@@ -327,11 +327,7 @@ input[type=number]{width:52px;text-align:center;padding:0 8px;}
 
 </div><!-- .app -->
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ─── CORE UI (loaded first so onclick works) ─────────
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function doLogout(){if(typeof S!=='undefined'){S.currentUser=null;S.isAdmin=false;}showScreen('s-login');}
 // ─── DATA ───────────────────────────────────────────────
 const GROUPS_DATA={
   A:["México","África do Sul","Coreia do Sul","Rep. Tcheca"],
@@ -352,6 +348,7 @@ const GROUPS_DATA={
 const FLAG_CODES={"México":"mx","África do Sul":"za","Coreia do Sul":"kr","Rep. Tcheca":"cz","Canadá":"ca","Bósnia":"ba","Catar":"qa","Suíça":"ch","Brasil":"br","Marrocos":"ma","Haiti":"ht","Escócia":"gb-sct","Estados Unidos":"us","Paraguai":"py","Austrália":"au","Turquia":"tr","Alemanha":"de","Curaçao":"cw","Costa do Marfim":"ci","Equador":"ec","Holanda":"nl","Japão":"jp","Suécia":"se","Tunísia":"tn","Bélgica":"be","Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Espanha":"es","Cabo Verde":"cv","Arábia Saudita":"sa","Uruguai":"uy","França":"fr","Senegal":"sn","Noruega":"no","Iraque":"iq","Argentina":"ar","Argélia":"dz","Áustria":"at","Jordânia":"jo","Portugal":"pt","Uzbequistão":"uz","Colômbia":"co","RD Congo":"cd","Inglaterra":"gb-eng","Croácia":"hr","Gana":"gh","Panamá":"pa"};
 function flagImg(name,size=20){const c=FLAG_CODES[name];if(!c)return'<span style="font-size:16px">🏳</span>';return`<img src="https://flagcdn.com/w${size}/${c}.png" srcset="https://flagcdn.com/w${size*2}/${c}.png 2x" width="${size}" height="${Math.round(size*0.75)}" alt="${name}" style="border-radius:2px;object-fit:cover;vertical-align:middle;flex-shrink:0"/>`;}
 const FLAGS={};
+;
 
 const ALL_TEAMS=Object.values(GROUPS_DATA).flat();
 
@@ -481,55 +478,6 @@ let S={
 };
 
 const KEY='bolao26_premium';
-
-// ─── SUPABASE CONFIG ─────────────────────────────────────
-// Preencha com suas credenciais do Supabase (ver instruções abaixo)
-const SB_URL = localStorage.getItem('sb_url')||'';
-const SB_KEY = localStorage.getItem('sb_key')||'';
-let sbReady = false;
-let supabase = null;
-
-async function initSupabase(){
-  if(!SB_URL||!SB_KEY){sbReady=false;return;}
-  // Wait for Supabase CDN to load
-  let attempts=0;
-  while(typeof window.supabase === 'undefined' && attempts<20){
-    await new Promise(r=>setTimeout(r,200));
-    attempts++;
-  }
-  try{
-    if(typeof window.supabase !== 'undefined'){
-      supabase=window.supabase.createClient(SB_URL,SB_KEY);
-      sbReady=true;
-      console.log('Supabase conectado');
-    }
-  }catch(e){sbReady=false;console.warn('Supabase offline:',e);}
-}
-
-async function sbSave(){
-  if(!sbReady||!supabase)return;
-  try{
-    const payload={
-      id:'bolao2026_main',
-      cfg:S.cfg, games:S.games, players:S.players,
-      updated_at:new Date().toISOString()
-    };
-    await supabase.from('bolao_state').upsert(payload,{onConflict:'id'});
-  }catch(e){console.warn('Supabase save error:',e);}
-}
-
-async function sbLoad(){
-  if(!sbReady||!supabase)return false;
-  try{
-    const{data,error}=await supabase.from('bolao_state').select('*').eq('id','bolao2026_main').single();
-    if(error||!data)return false;
-    if(data.cfg)S.cfg=data.cfg;
-    if(data.games)S.games=data.games;
-    if(data.players)S.players=data.players;
-    console.log('Loaded from Supabase');
-    return true;
-  }catch(e){console.warn('Supabase load error:',e);return false;}
-}
 // ─── STORAGE: 3-LAYER PROTECTION ────────────────────────
 const KEY_BACKUP=KEY+'_backup';
 const KEY_META=KEY+'_meta';
@@ -543,7 +491,7 @@ function buildPayload(){
 
 function loadS(){
   try{const d=localStorage.getItem(KEY);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;return;}}catch(e){}
-  try{const d=localStorage.getItem(KEY_BACKUP);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;console.warn('Loaded from backup slot');}}catch(e){}
+  try{const d=localStorage.getItem(KEY_BACKUP);if(d){const p=JSON.parse(d);if(p.cfg)S.cfg=p.cfg;if(p.games)S.games=p.games;if(p.players)S.players=p.players;}}catch(e){}
 }
 
 function saveS(){
@@ -551,109 +499,20 @@ function saveS(){
   try{localStorage.setItem(KEY,str);}catch(e){}
   try{localStorage.setItem(KEY_BACKUP,str);}catch(e){}
   try{localStorage.setItem(KEY_META,JSON.stringify({saved:payload._saved,players:payload._nPlayers,results:payload._nResults}));}catch(e){}
-  // Also save to Supabase (async, non-blocking)
-  sbSave().catch(()=>{});
 }
 
 function getStorageHealth(){
   const mainOk=!!localStorage.getItem(KEY);const backupOk=!!localStorage.getItem(KEY_BACKUP);
-  let lastSaved='Nunca';let nPlayers=0;let nResults=0;
+  let lastSaved='Nunca';
   try{const m=JSON.parse(localStorage.getItem(KEY_META)||'{}');
     if(m.saved){const diff=Math.round((Date.now()-new Date(m.saved).getTime())/60000);
-      lastSaved=diff<1?'agora mesmo':diff<60?diff+'min atrás':Math.round(diff/60)+'h atrás';}
-    nPlayers=m.players||0;nResults=m.results||0;
+      lastSaved=diff<1?'agora mesmo':diff<60?diff+'min atras':Math.round(diff/60)+'h atras';}
   }catch(e){}
-  return{mainOk,backupOk,lastSaved,nPlayers,nResults};
-}
-
-function downloadBackup(){
-  const str=JSON.stringify(buildPayload(),null,2);
-  const blob=new Blob([str],{type:'application/json'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');
-  a.href=url;a.download='bolao-copa2026-backup-'+new Date().toISOString().slice(0,10)+'.json';
-  a.click();URL.revokeObjectURL(url);
-  toast('Backup baixado!');
-}
-
-function triggerRestore(){document.getElementById('restore-input').click();}
-
-function handleRestore(e){
-  const file=e.target.files[0];if(!file)return;
-  const reader=new FileReader();
-  reader.onload=function(ev){
-    try{
-      const p=JSON.parse(ev.target.result);
-      if(!p.cfg||!p.games||!p.players){toast('Arquivo invalido','err');return;}
-      const n=Object.keys(p.players).length;
-      if(!confirm('Restaurar backup com '+n+' participante(s) e '+p.games.filter(g=>g.result).length+' resultado(s)?\n\nSalvo em: '+(p._saved||'desconhecido')+'\n\nATENCAO: isso vai sobrescrever os dados atuais.')){return;}
-      S.cfg=p.cfg;S.games=p.games;S.players=p.players;
-      saveS();renderAdmin();renderAdminBackup();
-      toast('Restaurado! '+n+' participante(s) recuperado(s)');
-    }catch(err){toast('Erro ao ler arquivo','err');}
-  };
-  reader.readAsText(file);e.target.value='';
-}
-
-function renderAdminBackup(){
-  const h=getStorageHealth();
-  const nP=Object.keys(S.players).length;
-  const nR=S.games.filter(g=>g.result).length;
-  const nPalpites=Object.values(S.players).reduce((acc,p)=>acc+Object.keys(p.palpites||{}).filter(k=>{const pp=p.palpites[k];return pp.h!==''&&pp.a!==''}).length,0);
-  document.getElementById('a-tab-backup').innerHTML=`
-  <input type="file" id="restore-input" accept=".json" style="display:none" onchange="handleRestore(event)"/>
-  <div style="background:var(--green-bg);border:1px solid var(--green-dim);border-radius:14px;padding:16px;margin-bottom:12px;">
-    <div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:10px;">Status dos dados</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nP}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">PARTICIPANTES</div></div>
-      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nPalpites}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">PALPITES FEITOS</div></div>
-      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">${nR}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">RESULTADOS</div></div>
-      <div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:16px;font-weight:700;color:var(--green);">${h.lastSaved}</div><div style="font-size:10px;color:var(--muted);margin-top:2px;">ULTIMO SAVE</div></div>
-    </div>
-    <div style="display:flex;gap:8px;">
-      <div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;"><span>${h.mainOk?'✅':'❌'}</span><span style="font-size:12px;color:var(--muted);">Copia principal</span></div>
-      <div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px 10px;"><span>${h.backupOk?'✅':'❌'}</span><span style="font-size:12px;color:var(--muted);">Copia de seguranca</span></div>
-    </div>
-  </div>
-  <div class="card" style="margin-bottom:10px;">
-    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Baixar backup completo</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Salva um arquivo .json com todos os dados. <strong style="color:var(--amber);">Faca isso diariamente durante a Copa!</strong></div>
-    <button class="btn btn-primary" onclick="downloadBackup()" style="width:100%;">Baixar backup agora</button>
-  </div>
-  <div class="card" style="margin-bottom:10px;">
-    <div style="font-size:14px;font-weight:600;margin-bottom:4px;">Restaurar de backup</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Use um arquivo .json baixado anteriormente para recuperar dados perdidos.</div>
-    <button class="btn" onclick="triggerRestore()" style="width:100%;border-color:var(--amber);color:var(--amber);">Restaurar backup</button>
-  </div>
-  <div class="card">
-    <div style="font-size:13px;font-weight:600;margin-bottom:8px;">Como os dados sao protegidos</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.7;">
-      <div style="margin-bottom:4px;">✅ <strong style="color:var(--text);">Copia dupla automatica</strong> — cada salvamento grava em 2 slots diferentes do browser.</div>
-      <div style="margin-bottom:4px;">✅ <strong style="color:var(--text);">Recuperacao automatica</strong> — se a copia principal falhar, carrega da copia de seguranca.</div>
-      <div style="margin-bottom:4px;">⚠️ <strong style="color:var(--amber);">Backup offline recomendado</strong> — baixe o JSON diariamente como garantia extra.</div>
-      <div>❌ <strong style="color:var(--text);">Risco: limpar cache do browser</strong> — so o arquivo JSON salvo offline recupera os dados nesse caso.</div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:10px;border-color:var(--amber);">
-    <div style="font-size:14px;font-weight:600;margin-bottom:4px;color:var(--amber);">☁️ Supabase — banco na nuvem</div>
-    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Com Supabase, os dados ficam salvos na nuvem. Qualquer device acessa os mesmos dados. ${sbReady?'<span style="color:var(--green);">● Conectado</span>':'<span style="color:var(--red);">● Não configurado</span>'}</div>
-    <div class="field" style="margin-bottom:8px;">
-      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Supabase URL</label>
-      <input type="text" id="sb-url-input" placeholder="https://xxxxx.supabase.co" value="${localStorage.getItem('sb_url')||''}" style="width:100%;font-size:12px;"/>
-    </div>
-    <div class="field" style="margin-bottom:12px;">
-      <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em;">Anon Key</label>
-      <input type="text" id="sb-key-input" placeholder="eyJ..." value="${localStorage.getItem('sb_key')||''}" style="width:100%;font-size:12px;"/>
-    </div>
-    <button class="btn" onclick="saveSupabaseConfig()" style="width:100%;border-color:var(--amber);color:var(--amber);margin-bottom:8px;">Salvar e conectar</button>
-    <div style="font-size:11px;color:var(--muted);line-height:1.6;">
-      Como configurar: 1) Acesse supabase.com e crie conta gratuita → 2) Crie um projeto → 3) Va em SQL Editor e execute: <code style="background:var(--surface2);padding:1px 4px;border-radius:4px;font-size:10px;">CREATE TABLE bolao_state (id text PRIMARY KEY, cfg jsonb, games jsonb, players jsonb, updated_at timestamptz);</code> → 4) Copie a URL e Anon Key de Settings > API
-    </div>
-  </div>\`;
+  return{mainOk,backupOk,lastSaved};
 }
 
 // ─── UTILS ──────────────────────────────────────────────
-// showScreen defined above
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 
 function toast(msg,type='ok'){
   const t=document.getElementById('toast');
@@ -678,7 +537,7 @@ function doLogin(){
   saveS();renderMain();showScreen('s-main');
 }
 
-// doLogout defined above
+function doLogout(){S.currentUser=null;S.isAdmin=false;showScreen('s-login');}
 
 function createBolao(){
   const ap=document.getElementById('a-newpass').value.trim();
@@ -816,15 +675,13 @@ function renderPalpites(){
 function gameRowHTML(g,pl){
   const p=pl?pl.palpites[g.id]||{h:'',a:''}:{h:'',a:''};
   const locked=g.result!==null;
-  const hf=flagImg(g.home);const af=flagImg(g.away);
-  const dateTag=g.date?`<div style="font-size:10px;color:var(--muted);text-align:center;margin-bottom:2px;">${g.date} ${g.time}</div>`:'';
+  const hf=FLAGS[g.home]||'🏳';const af=FLAGS[g.away]||'🏳';
   if(locked){
     const pts=pl?getPtsForGame(g,p):null;
     const ptsHtml=pts!==null&&pts>0?`<span class="badge badge-green" style="font-size:10px;">+${pts}</span>`:'';
     return `<div class="game-row">
       <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
       <div style="text-align:center;flex-shrink:0;">
-        ${dateTag}
         <div class="score-final">${g.result.h}–${g.result.a}</div>
         <div class="my-guess">${p.h!==''?`seu: ${p.h}-${p.a} ${ptsHtml}`:'sem palpite'}</div>
       </div>
@@ -833,13 +690,10 @@ function gameRowHTML(g,pl){
   }
   return `<div class="game-row">
     <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
-    <div style="text-align:center;flex-shrink:0;">
-      ${dateTag}
-      <div class="score-center">
-        <input type="number" min="0" max="20" value="${p.h}" placeholder="–" onchange="savePalpite(${g.id},'h',this.value)" />
-        <span class="score-sep">–</span>
-        <input type="number" min="0" max="20" value="${p.a}" placeholder="–" onchange="savePalpite(${g.id},'a',this.value)" />
-      </div>
+    <div class="score-center">
+      <input type="number" min="0" max="20" value="${p.h}" placeholder="–" onchange="savePalpite(${g.id},'h',this.value)" />
+      <span class="score-sep">–</span>
+      <input type="number" min="0" max="20" value="${p.a}" placeholder="–" onchange="savePalpite(${g.id},'a',this.value)" />
     </div>
     <div class="team-side"><span class="team-flag">${af}</span><span class="team-name">${g.away}</span></div>
   </div>`;
@@ -1002,7 +856,7 @@ function renderBonus(){
         <span class="badge badge-green">+${q.pts}</span>
       </div>`;
     if(locked){
-      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${flagImg(adminAns,16)} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${flagImg(cur,16)} ${cur}`:'— sem palpite'}</div>`;
+      html+=`<div class="alert alert-ok" style="margin-top:8px;">Resposta oficial: <strong>${FLAGS[adminAns]||''} ${adminAns}</strong>${cur===adminAns?' — você acertou! 🎉':cur?` — seu palpite: ${FLAGS[cur]||''} ${cur}`:'— sem palpite'}</div>`;
     } else if(q.type==='choice'){
       html+=`<div class="bonus-opts">`;
       q.opts.forEach(o=>html+=`<button class="bonus-opt${cur===o?' sel':''}" onclick="saveBonus('${q.key}','${o}')">${o}</button>`);
@@ -1012,7 +866,7 @@ function renderBonus(){
         <input type="text" id="bs-${q.key}" placeholder="Buscar seleção..." oninput="filterTeams('${q.key}',this.value,false)" autocomplete="off" value="${cur||''}" style="width:100%"/>
         <div id="bd-${q.key}" class="search-drop"></div>
       </div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${flagImg(cur,20)} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:14px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="saveBonus('${q.key}',null);document.getElementById('bs-${q.key}').value='';renderBonus();">Trocar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -1024,7 +878,7 @@ function filterTeams(key,q,isAdmin){
   const drop=document.getElementById(dpfx+key);
   if(!q){drop.classList.remove('open');return;}
   const m=ALL_TEAMS.filter(t=>t.toLowerCase().includes(q.toLowerCase())).slice(0,8);
-  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${flagImg(t,20)} ${t}</div>`).join('');
+  drop.innerHTML=m.map(t=>`<div class="search-item" onclick="${isAdmin?`selTeamAdmin`:`selTeam`}('${key}','${t}')">${FLAGS[t]||'🏳'} ${t}</div>`).join('');
   drop.classList.toggle('open',m.length>0);
 }
 
@@ -1050,7 +904,7 @@ function renderResultados(){
   if(withResult.length){
     html+=`<div class="section-head"><div class="section-title">Resultados</div><span class="badge badge-green">${withResult.length} jogos</span></div><div class="card">`;
     withResult.forEach(g=>{
-      const hf=flagImg(g.home);const af=flagImg(g.away);
+      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <div class="score-final">${g.result.h}–${g.result.a}</div>
@@ -1062,7 +916,7 @@ function renderResultados(){
   if(upcoming.length){
     html+=`<div class="section-head"><div class="section-title">Próximos</div></div><div class="card">`;
     upcoming.forEach(g=>{
-      const hf=flagImg(g.home);const af=flagImg(g.away);
+      const hf=FLAGS[g.home]||'';const af=FLAGS[g.away]||'';
       html+=`<div class="game-row">
         <div class="team-side right"><span class="team-name">${g.home}</span><span class="team-flag">${hf}</span></div>
         <span style="font-size:12px;color:var(--muted2);padding:2px 10px;">vs</span>
@@ -1241,7 +1095,7 @@ function renderAdminBonus(){
       html+=`</div>`;
     } else {
       html+=`<div class="search-wrap"><input type="text" id="abs-${q.key}" placeholder="Buscar..." oninput="filterTeams('${q.key}',this.value,true)" autocomplete="off" value="${cur||''}" style="width:100%;"/><div id="abd-${q.key}" class="search-drop"></div></div>`;
-      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${flagImg(cur,20)} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
+      if(cur)html+=`<div style="display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px;">${FLAGS[cur]||''} <strong>${cur}</strong> <button class="btn btn-ghost btn-sm" onclick="S.cfg['${q.key}']=null;saveS();renderAdminBonus();">Limpar</button></div>`;
     }
     html+=`</div>`;
   });
@@ -1268,7 +1122,7 @@ function renderAdminParticipantes(){
       const champ=(p.bonus||{}).champion||'–';
       html+=`<div class="rank-row">
         <div class="rank-avatar" style="background:${avatarColor(name)}">${initials(name)}</div>
-        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${flagImg(champ,14)} ${champ}</div></div>
+        <div class="rank-info"><div class="rank-name-text">${name}</div><div class="rank-sub">${done}/${S.games.length} palpites · ${FLAGS[champ]||''} ${champ}</div></div>
         <button class="btn btn-danger btn-sm" onclick="removePlayer('${name}')">✕</button>
       </div>`;
     });
@@ -1309,7 +1163,65 @@ function renderAdminRanking(){
   document.getElementById('a-tab-ranking-a').innerHTML=html;
 }
 
-// ─── INIT ────────────────────────────────────────────────
+function downloadBackup(){
+  const payload=buildPayload();const str=JSON.stringify(payload,null,2);
+  const blob=new Blob([str],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='bolao-copa2026-'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();URL.revokeObjectURL(url);
+  toast('Backup baixado!');
+}
+function triggerRestore(){document.getElementById('restore-input').click();}
+function handleRestore(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){
+    try{
+      const p=JSON.parse(ev.target.result);
+      if(!p.cfg||!p.games||!p.players){toast('Arquivo invalido','err');return;}
+      const n=Object.keys(p.players).length;
+      if(!confirm('Restaurar '+n+' participante(s)?\nSalvo em: '+(p._saved||'?')+'\n\nIsto sobrescreve os dados atuais.')){return;}
+      S.cfg=p.cfg;S.games=p.games;S.players=p.players;
+      saveS();renderAdmin();renderAdminBackup();
+      toast('Restaurado! '+n+' participante(s)');
+    }catch(err){toast('Erro ao ler arquivo','err');}
+  };
+  reader.readAsText(file);e.target.value='';
+}
+function renderAdminBackup(){
+  const h=getStorageHealth();
+  const nP=Object.keys(S.players).length;
+  const nR=S.games.filter(g=>g.result).length;
+  const nPalpites=Object.values(S.players).reduce((acc,p)=>acc+Object.keys(p.palpites||{}).filter(k=>{const pp=p.palpites[k];return pp.h!==''&&pp.a!==''}).length,0);
+  document.getElementById('a-tab-backup').innerHTML=
+    '<input type="file" id="restore-input" accept=".json" style="display:none" onchange="handleRestore(event)"/>'+
+    '<div style="background:var(--green-bg);border:1px solid var(--green-dim);border-radius:14px;padding:16px;margin-bottom:12px;">'+
+      '<div style="font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--green);margin-bottom:10px;">Status dos dados</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'+
+        '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">'+nP+'</div><div style="font-size:10px;color:var(--muted);">PARTICIPANTES</div></div>'+
+        '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">'+nPalpites+'</div><div style="font-size:10px;color:var(--muted);">PALPITES</div></div>'+
+        '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:800;color:var(--green);">'+nR+'</div><div style="font-size:10px;color:var(--muted);">RESULTADOS</div></div>'+
+        '<div style="background:rgba(0,0,0,.2);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:14px;font-weight:700;color:var(--green);">'+h.lastSaved+'</div><div style="font-size:10px;color:var(--muted);">ULTIMO SAVE</div></div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;">'+
+        '<div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px;">'+(h.mainOk?'✅':'❌')+'<span style="font-size:12px;color:var(--muted);">Copia principal</span></div>'+
+        '<div style="flex:1;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.2);border-radius:8px;padding:8px;">'+(h.backupOk?'✅':'❌')+'<span style="font-size:12px;color:var(--muted);">Copia seguranca</span></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="card" style="margin-bottom:10px;">'+
+      '<div style="font-size:14px;font-weight:600;margin-bottom:4px;">Baixar backup completo</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Arquivo .json com todos os dados. <strong style="color:var(--amber);">Faca diariamente!</strong></div>'+
+      '<button class="btn btn-primary" onclick="downloadBackup()" style="width:100%;">Baixar backup agora</button>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div style="font-size:14px;font-weight:600;margin-bottom:4px;">Restaurar de backup</div>'+
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px;">Use arquivo .json para recuperar dados perdidos.</div>'+
+      '<button class="btn" onclick="triggerRestore()" style="width:100%;border-color:var(--amber);color:var(--amber);">Restaurar backup</button>'+
+    '</div>';
+}
+
+// ─── INIT ──────────────────────────────────────────────
 loadS();
 </script>
 </body>
